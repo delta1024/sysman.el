@@ -27,7 +27,7 @@ recomened to set set a dir-local-variable in the project root")
   (blueprint--get-parent-dir)
   (pcase blueprint--file-parent-folder
     ((pred (lambda (folder)
-	     (string-match-p folder "project-root:")))
+	     (string-match-p folder "Project Root:")))
      (funcall (lambda ()
 		(setq-local blueprint--file-parent-folder blueprint-project-folder))))
 
@@ -47,99 +47,83 @@ recomened to set set a dir-local-variable in the project root")
   (blueprint--expand-file-path)
   (find-file blueprint--file-absolute-path))
 
-(defun blueprint-push-alist (value key alist)
-  (setcdr (assq key alist) (push value (cdr (assq key alist)))))
-
-;; (setq test-alist '((:hello "temp")))
-
-;; (blueprint-push-alist "hi" test-symbol test-alist)
 
 
-(defun blueprint--cleanup-ls-buffer (buffer)
-  (let ((file-level-syntax "^    .*"))
-    (with-current-buffer buffer
-      (goto-char (point-min))
-      (next-line 3)
-      (setq-local dir-file-alist '((:project-root . (list))))
-      (setcdr (assq :project-root dir-file-alist)
-	      (push (string-trim (thing-at-point 'line t))
-		    (cdr (assq :project-root dir-file-alist)))))
-    (next-line)
-      (setcdr (assq :project-root dir-file-alist)
-	      (push (string-trim (thing-at-point 'line t))
-		    (cdr (assq :project-root dir-file-alist))))
-    ))
-
-
-(defun blueprint--format-ls ()
-  "formats the output of `ls -r' to a syntax `blueprint-mode' can understand"
-  (let ((temp-buff (get-buffer-create
-		    (concat blueprint-output-buffer ":" blueprint--default-ls-command)))
-	(top-level-syntax "^\.:$")
-	(file-level-syntax "^\./.*")
-	(format-top-level-syntax (lambda ()
-				   (delete-region (line-beginning-position) (line-end-position))
-				   (insert "Project Root:")))
-	(add-to-file-structure-alist (lambda ()
-				       (let ((line-string (buffer-substring (line-beginning-position) (line-end-position))))
-					 (blueprint-push-alist line-string current-directory-level file-structure-alist))))
-					 
-	(format-file-level-syntax (lambda ()
-				    (let ((line-string (buffer-substring (line-beginning-position) (line-end-position))))
-				      (setq-local current-directory-level (intern (string-trim-right (concat ":" (substring line-string 2)) ":")))
-				      (push `(,current-directory-level) file-structure-alist)
-				      ))))
-
-    (with-current-buffer temp-buff
-      (erase-buffer)
-      (shell-command blueprint--default-ls-command (current-buffer))
-      (goto-char (point-min))
-      (push '(:project-root) file-structure-alist)
-      (loop-while (/= (point-max) (point))
-	(pcase (thing-at-point 'line t)
-	  ;; Matches top level heading
-	  ((pred (lambda (string)
-		   (string-match-p top-level-syntax string)))
-
-	   (funcall (lambda ()
-		      (setq-local current-directory-level :project-root))
-		    ))
-	  ;; Matches folder headings
-	  ((pred (lambda (string)
-		   (string-match-p file-level-syntax string)))
-
-	   (funcall format-file-level-syntax))
-
-	  ;; Matches everything else
-	  ((pred (lambda (string)
-		   (string-match-p "^\n$" string)))
-	   nil)
-	  (_
-	   (funcall (lambda ()
-		      (blueprint-push-alist
-		       (buffer-substring (line-beginning-position) (line-end-position))
-					    current-directory-level file-structure-alist))
-		    )))
-	  (next-line))
-      (erase-buffer)
-      (goto-char (point-min))
-      (dolist (item (reverse file-structure-alist))
-	(insert (format "\n%s:\n" (substring (symbol-name (car item)) 1)))
-	(dolist (folder (cdr item))
-	  (insert (format "\t%s\n" folder)))))
-      
-    temp-buff))
 	     
+(defun blueprint--format-ls ()
+  (let* ((top-level-syntax "^\.:$")
+	 (dir-level-syntax "^\./.*")
+	 (empty-line-syntax "^\n$")
+	 (push-file-to-directory (lambda ()
+				   "pushes the buffer line at point to the cdr of the alist matching `current-directory-level'"
+				   (let ((line-string (buffer-substring (line-beginning-position) (line-end-position))))
+				     (setcdr (assq current-directory-level directory-tree-alist)
+					     (push line-string (cdr (assq current-directory-level directory-tree-alist))))))) ;; lambda ends 2 parens in
+	 
+	 (ls-command "ls -R")
+	 (working-dir (expand-file-name "example" "~/Projects/Code/blueprint.el")))
+    (concat "\n"
+	     (with-temp-buffer
+	       (cd working-dir)
+	       (setq-local directory-tree-alist '())
+	       (shell-command ls-command (current-buffer))
+	       (goto-char (point-min))
+	       (loop-while (/= (point) (point-max))
+		 (pcase (thing-at-point 'line t)
+		   ((pred (lambda (string)
+			    "matches `top-level-syntax'"
+			    (string-match-p top-level-syntax string)))
+		    (funcall (lambda ()
+			       "adds `:root-directory' to
+                               `directory-tree-alsit' and 
+                                sets `current-level-directory'
+                                to the same"
+			       (push '(:root-directory) directory-tree-alist)
+			       (setq-local current-directory-level :root-directory))))
+		   ((pred (lambda (string)
+			    "matches `directory-level-syntax'"
+			    (string-match-p dir-level-syntax string)))
+		    (funcall (lambda ()
+			       "grabs the current buffer line as a
+			      string and sets it's value to
+			      `line-string', it then removes the
+			      trailing \":\" and prepends
+			      \":\". finally it sets the value of
+			      the buffer-local-variable
+			      `current-directory-level' to the
+			      interned value of `line-string'."
+			       (let ((line-string (buffer-substring (line-beginning-position) (line-end-position))))
+				 (setq-local current-directory-level (intern (concat ":" (string-trim-right line-string ":"))))
+				 (push `(,current-directory-level) directory-tree-alist)))))
+		   
+		   ((pred (lambda (string)
+			    "matches and empty line"
+			    (string-match-p empty-line-syntax string)))
+		    nil)
+		   (_ 				;; Anything else that matches must be a file
+		    (funcall push-file-to-directory)))
+		 (next-line))
+	       
+	       (erase-buffer)
+	       (insert "Project Root:\n")
+	       (setq-local directory-tree-alist (reverse directory-tree-alist))
+	       (setq-local root-dir-alist (pop directory-tree-alist))
+	       (pop root-dir-alist)
+	       (dolist (file-name root-dir-alist)
+		 (insert (format "\t%s\n" file-name)))
+	       (dolist (folder-name directory-tree-alist)
+		 (insert (string-trim-left (format "%s:\n" (car folder-name)) ":\./" ))
+		 (dolist (file-name (cdr folder-name))
+		   (insert (format "\t%s\n" file-name))))
+	       (buffer-string)))))
+
 (defun blueprint--format-buffer (buffer project-root)
   "Assumes that BUFFER is the current `blueprint-buffer-name'
 that DEFAULT-DIR is `blueprint-project-folder' or the directory
 you wish to be treted as the project root, and that
 `buffer-read-only' is set to `nil'."
-  (cd project-root)
-  (setq file-structure-alist '())
   (insert (format "Project Root: %s\n\n" project-root))
-  (insert-buffer (blueprint--format-ls))
-  (blueprint--cleanup-ls-buffer (current-buffer)))
+  (insert (blueprint--format-ls)))
 
 
 (defun blueprint--revert-buffer (ignore-auto noconfirm)
