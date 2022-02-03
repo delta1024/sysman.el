@@ -5,4 +5,4 @@
 			       (kbd "j")
 			       (lambda nil
 				 (interactive)
-				 (async-shell-command "emacs --with-profile blueprint")))))))
+				 (async-shell-command "emacs --debug-init --with-profile blueprint")))))))
