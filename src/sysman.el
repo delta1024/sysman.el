@@ -45,15 +45,29 @@ return value."
 	(insert (format "Project Root: %s\n" (expand-file-name sysman-config-folder))))
       
       (dolist (folder-list folders)
-	(insert (propertize (format "\n%s:\n" (pop folder-list))  'file-type 'directory))
-	(dolist (files folder-list)
-	  (insert (propertize (format "\t%s\n" files) 'file-type 'file))))
+	(let* ((parent-dir (pop folder-list))
+	       (parent-dir-path (sysman--canonicalize-folder-path parent-dir)))
+
+	  (insert (propertize (format "\n%s:\n" parent-dir)  'file-type 'directory))
+	  
+	  (dolist (files folder-list)
+	    (if (f-directory-p (expand-file-name files parent-dir-path))
+		(insert (propertize (format "\t%s\n" files) 'file-type 'directory))
+	      (insert (propertize (format "\t%s\n" files) 'file-type 'file))))))
       (setq-local buffer-read-only 't))))
+
+(defun sysman-init-hook ()
+  (sysman--format-buffer-function nil nil))
+
+(add-hook 'sysman-mode-hook #'sysman-init-hook)
 
 (defun sysman ()
   (interactive)
-  (with-current-buffer-window (get-buffer-create sysman--buffer-name) (get-buffer-create sysman--buffer-name)  nil
+  (with-current-buffer-window
+      (get-buffer-create sysman--buffer-name)
+      (get-buffer-create sysman--buffer-name)  nil
     (sysman-mode)))
+
 (define-derived-mode sysman-mode special-mode "Sysman" "Major Mode for managing my GNU/Guix system"
   (setq-local revert-buffer-function #'sysman--format-buffer-function))
 
