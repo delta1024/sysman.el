@@ -199,6 +199,3 @@ after setting `buffer-read-only' to `nil'"
   (add-hook 'sysman-mode-hook 'sysman-revert-hook)
   (define-key sysman-mode-map (kbd "RET") #'sysman-open-file)
   (setq-local revert-buffer-function #'sysman--revert-buffer))
-
-
-

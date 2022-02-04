@@ -32,10 +32,11 @@ return value."
 	      user-folder) folder-structure-list))
     (reverse folder-structure-list)))
 
-(defun sysman-format-buffer-hook ()
+(defun sysman--format-buffer-function (arg1 arg2)
   "formats the default *sysman pannel*"
   (let ((folders (sysman--get-watched-folders-contents)))
-    (with-current-buffer-window (get-buffer-create sysman--buffer-name) sysman--buffer-name nil
+    (with-current-buffer (get-buffer-create sysman--buffer-name)  
+      (setq-local buffer-read-only 'nil)
       (erase-buffer)
       (if sysman-repo-folder
 	  (insert (format "Project Root:     %s\nGuix Repo Folder: %s\n"
@@ -44,9 +45,16 @@ return value."
 	(insert (format "Project Root: %s\n" (expand-file-name sysman-config-folder))))
       
       (dolist (folder-list folders)
-	(insert (propertize (format "\n%s:\n" (pop folder-list))  'directory 't))
+	(insert (propertize (format "\n%s:\n" (pop folder-list))  'file-type 'directory))
 	(dolist (files folder-list)
-	  (insert (propertize (format "\t%s\n" files) 'file 't)))))))
-;; (sysman-format-buffer-hook)
-(provide 'sysman)
+	  (insert (propertize (format "\t%s\n" files) 'file-type 'file))))
+      (setq-local buffer-read-only 't))))
 
+(defun sysman ()
+  (interactive)
+  (with-current-buffer-window (get-buffer-create sysman--buffer-name) (get-buffer-create sysman--buffer-name)  nil
+    (sysman-mode)))
+(define-derived-mode sysman-mode special-mode "Sysman" "Major Mode for managing my GNU/Guix system"
+  (setq-local revert-buffer-function #'sysman--format-buffer-function))
+
+(provide 'sysman)

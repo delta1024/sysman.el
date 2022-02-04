@@ -10,12 +10,20 @@ At it's most basic level the package will take the values stored in ~sysman-watc
 
 - after having it's text property set to ~'source-folder~, which is the value of the file/folder's parent directory as an absolute path.
 * Todo
-** TODO Wirte the formating fuction to display the text appropreatly in the buffer
-** TODO Create a function that will loop throught  our alist and add the files source dir a text property to each item in our lists
+** TODO Define any font faces that are needed and add there property to the appropriate section of the formating function
+** TODO check if each file is a directory and and add an appropriate property to the text
 * Next
 ** DONE Get folder contents
 - The =ls= output will the be itterated over with each line being pushed to a list, the value of that list will then be assosiated with a key whose value is the ~sysman-watched-folders~ value. The finalised alist will be returned by the function.
- 
 
+** DONE Create a functin that will iterate over a given list, the first value being the key of the default-directory, if any of the next items in the list happen to be a directory it will expand subfolders to be a sublist with the first value as the directory name and the rest of the values being it's contents, if it's a file keep it as is. 
 
-** TODO Create a functin that will iterate over a given list, the first value being the key of the default-directory, if any of the next items in the list happen to be a directory it will expand subfolders to be a sublist with the first value as the directory name and the rest of the values being it's contents, if it's a file keep it as is. 
+** DONE Wirte the formating fuction to display the text appropreatly in the buffer
+CLOSED: [2022-02-03 Thu 18:23]
+
+** DONE Define a function to setup the appropreate environment and open the popup window
+CLOSED: [2022-02-03 Thu 21:34]
+** DONE Remove the popup window from formaiting function
+CLOSED: [2022-02-03 Thu 21:34]
+** DONE Define ~sysman-mode~
+CLOSED: [2022-02-03 Thu 21:35]
