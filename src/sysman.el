@@ -4,55 +4,49 @@
 
 (defvar sysman--buffer-name "*sysman pannel*" "the default sysman buffer name value")
 
-(defvar sysman-repo-folder 'nil "if non-nil this variable is appended to `sysman-config-folder' when `sysman--get-repo-folder' is run")
+(defvar sysman-repo-folder 'nil "if non-nil this variable is appended to `sysman-config-folder' when `sysman--canonicalize-folder-path' is run")
 
 ;; (setq sysman-config-folder "~/.system"
 ;;       sysman-repo-folder "d1024"
 ;;       sysman-watched-folders '("d1024" "d1024/services" "d1024/services/emacs"))
 
-(defun sysman--get-repo-folder ()
-  "if the value of `sysman-repo-folder' is non-nil, returns
-        `sysman-repo-folder'\'s value appended to the value of
-        `sysman-config-folder' as a reletive system path. Otherwise
-        returns `sysman-config-folder'"
-  (if sysman-repo-folder
-      (format "%s/%s" sysman-config-folder sysman-repo-folder)
-    sysman-config-folder))
 
 (defun sysman--canonicalize-folder-path (folder)
-  "returns the full system path of FOLDER reletive to the value
-        returned by `sysman--get-repo-folder'"
-  (let ((path (sysman--get-repo-folder)))
+  "if `sysman-repo-folder' is non-nil, appends it's value to `sysman-config-folder', returns the full system path of FOLDER reletive to that"
+  (let ((path (concat sysman-config-folder (if sysman-repo-folder
+					       (format "/%s" sysman-repo-folder) ""))))
     (expand-file-name folder path)))
 
-
-(defun sysman--get-folder-key (folder)
-  (let ((key (format ":%s" folder)))
-    (intern key)))
-
-(defun sysman--add-source-folder-property (file folder)
-  "add the FOLDER as the 'source-dir property fo FILE"
-  (propertize file 'source-dir folder))
-
 (defun sysman--get-watched-folders-contents ()
-  "runs the ls command on the folders specified in
-          `sysman-watched-folders' then places there value in an alist
-          containg the directory name as the key value and it's contents
-          as it's pair."
-  (with-temp-buffer
-    (let* ((folder-tree '()))
-      (dolist (source-folder sysman-watched-folders)
-        (push `(,(sysman--get-folder-key source-folder)
-                . ,(let* ((temp-list '())
-                          (default-directory (sysman--canonicalize-folder-path source-folder)))
-                     (shell-command "ls" (current-buffer))
-                     (goto-char (point-min))
-                     (next-line)
-                     (while (/= (point) (point-max))
-                       (push (thing-at-point 'line t) temp-list)
-                       (next-line))
-                     (erase-buffer)
-                     temp-list)) folder-tree))
+  "creates a list by runing `directory-files' on each folder in
+`sysman-watched-folders', removes \".\" and \"..\" and pushes
+the parent directory on to the list obtained from
+`directory-files', and pushes that value onto the function
+return value."
+  (let ((folder-structure-list '()))
+    (dolist (folder sysman-watched-folders)
+      (push (let ((user-folder (directory-files (sysman--canonicalize-folder-path folder))))
+	      (pop user-folder)
+	      (pop user-folder)
+	      (push folder user-folder)
+	      user-folder) folder-structure-list))
+    (reverse folder-structure-list)))
+
+(defun sysman-format-buffer-hook ()
+  "formats the default *sysman pannel*"
+  (let ((folders (sysman--get-watched-folders-contents)))
+    (with-current-buffer-window (get-buffer-create sysman--buffer-name) sysman--buffer-name nil
+      (erase-buffer)
+      (if sysman-repo-folder
+	  (insert (format "Project Root:     %s\nGuix Repo Folder: %s\n"
+			  (expand-file-name sysman-config-folder)
+			  (expand-file-name sysman-repo-folder sysman-config-folder)))
+	(insert (format "Project Root: %s\n" (expand-file-name sysman-config-folder))))
       
-      folder-tree)))
+      (dolist (folder-list folders)
+	(insert (propertize (format "\n%s:\n" (pop folder-list))  'directory 't))
+	(dolist (files folder-list)
+	  (insert (propertize (format "\t%s\n" files) 'file 't)))))))
+;; (sysman-format-buffer-hook)
 (provide 'sysman)
+

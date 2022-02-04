@@ -6,22 +6,16 @@ At it's most basic level the package will take the values stored in ~sysman-watc
 * The UI
 - The ui will be built from the values gathered by =ls= which will be run with ~default-directory~ set to the value of ~sysman-watched-folders~.
   
-- after having it's text property set to ~'source-folder~, which is the value of the file/folder's parent directory as an absolute path.
-
 - Finally we will itterate over ~file-structure-alist~ with a formatting function and insert the desired text into the buffer which will then be displayed to the user.
+
+- after having it's text property set to ~'source-folder~, which is the value of the file/folder's parent directory as an absolute path.
 * Todo
-** TODO expand subfolders to be a sublist with the first value as the directory name and the rest of the values being it's contents
 ** TODO Wirte the formating fuction to display the text appropreatly in the buffer
 ** TODO Create a function that will loop throught  our alist and add the files source dir a text property to each item in our lists
-** TODO Create a funciton to get the absolute path form each folder's key
-
 * Next
 ** DONE Get folder contents
 - The =ls= output will the be itterated over with each line being pushed to a list, the value of that list will then be assosiated with a key whose value is the ~sysman-watched-folders~ value. The finalised alist will be returned by the function.
-  
-
-#+begin_src emacs-lisp
-
-#+end_src
-
  
+
+
+** TODO Create a functin that will iterate over a given list, the first value being the key of the default-directory, if any of the next items in the list happen to be a directory it will expand subfolders to be a sublist with the first value as the directory name and the rest of the values being it's contents, if it's a file keep it as is. 
