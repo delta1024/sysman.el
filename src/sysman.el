@@ -6,10 +6,27 @@
 
 (defvar sysman-repo-folder 'nil "if non-nil this variable is appended to `sysman-config-folder' when `sysman--canonicalize-folder-path' is run")
 
-;; (setq sysman-config-folder "~/.system"
-;;       sysman-repo-folder "d1024"
-;;       sysman-watched-folders '("d1024" "d1024/services" "d1024/services/emacs"))
+(defface sysman-header-face
+  '((((type graphic) (background dark))
+     :foreground "darkseagreen2"))
+  "Face for sysman header lines"
+  :group 'sysman-faces)
 
+(defface sysman-file-face
+  '((((type graphic) (background dark))
+     :foreground "red"))
+  "Face for sysman file dispaly"
+  :group 'sysman-faces)
+
+(defface sysman-folder-face
+  '((((type graphic) (background dark))
+     :foreground "gold"))		
+ "Face for sysman folder diplay"
+  :group 'sysman-faces)
+
+(setq sysman-config-folder "~/.system"
+      sysman-repo-folder "d1024"
+      sysman-watched-folders '("d1024" "d1024/services" "d1024/services/emacs"))
 
 (defun sysman--canonicalize-folder-path (folder)
   "if `sysman-repo-folder' is non-nil, appends it's value to `sysman-config-folder', returns the full system path of FOLDER reletive to that"
@@ -48,12 +65,18 @@ return value."
 	(let* ((parent-dir (pop folder-list))
 	       (parent-dir-path (sysman--canonicalize-folder-path parent-dir)))
 
-	  (insert (propertize (format "\n%s:\n" parent-dir)  'file-type 'directory))
+	  (insert (propertize (format "\n%s:\n" parent-dir)
+			      'file-type 'header
+			      'font-lock-face 'sysman-header-face))
 	  
 	  (dolist (files folder-list)
 	    (if (f-directory-p (expand-file-name files parent-dir-path))
-		(insert (propertize (format "\t%s\n" files) 'file-type 'directory))
-	      (insert (propertize (format "\t%s\n" files) 'file-type 'file))))))
+		(insert (propertize (format "\t%s\n" files)
+				    'file-type 'directory
+				    'font-lock-face 'sysman-folder-face))
+	      (insert (propertize (format "\t%s\n" files)
+				  'file-type 'file
+				  'font-lock-face 'sysman-file-face))))))
       (setq-local buffer-read-only 't))))
 
 (defun sysman-init-hook ()

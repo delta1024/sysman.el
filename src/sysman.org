@@ -10,7 +10,6 @@ At it's most basic level the package will take the values stored in ~sysman-watc
 
 - after having it's text property set to ~'source-folder~, which is the value of the file/folder's parent directory as an absolute path.
 * Todo
-** TODO Define any font faces that are needed and add there property to the appropriate section of the formating function
 ** TODO Create buffer that hides watched dir info until the user needs it.
 * Next
 ** DONE Get folder contents
@@ -26,3 +25,5 @@ CLOSED: [2022-02-03 Thu 21:34]
 CLOSED: [2022-02-03 Thu 21:35]
 ** DONE check if each file is a directory and and add an appropriate property to the text
 CLOSED: [2022-02-04 Fri 10:16]
+** DONE Define any font faces that are needed and add there property to the appropriate section of the formating function
+CLOSED: [2022-02-04 Fri 11:20]
