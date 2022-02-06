@@ -1,8 +1,24 @@
 ;;; Title:      Sysman - System Manager
 ;;; Author:     Jacob Stannix
-;;; Created:    02.01.2022
+;;; Created:    02.03.2022
 ;;;
+;;; Copyright (c) 2022, Jacob Stannix
 ;;; A Emacs Package for managing my GNU/Guix Linux system
+
+;; This program is free software: you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 3 of
+;; the License, or (at your option) any later version.
+;; 
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+;; GNU General Public License for more details.
+;; 
+;; You should have received a copy of the GNU General Public
+;; License along with this program. If not, see
+;; https://www.gnu.org/licenses/.
+
 
 (defvar-local sysman--heading-alist 'nil
   "holds heading start and end positions")
@@ -37,9 +53,7 @@
   "Face for sysman folder diplay"
   :group 'sysman-faces)
 
-(setq sysman-config-folder "~/.system"
-      sysman-repo-folder "d1024"
-      sysman-watched-folders '("d1024" "d1024/services" "d1024/services/emacs"))
+
 
 (defun sysman--canonicalize-folder-path (folder)
   "if `sysman-repo-folder' is non-nil, appends it's value to `sysman-config-folder', returns the full system path of FOLDER reletive to that"
@@ -83,11 +97,10 @@ return value."
 		`(,heading-symbol . (,(funcall start-point) ,(funcall end-point)))) heading-alist)))
     (reverse heading-alist)))
 
-
 (defun sysman-initial-format-buffer-hook ()
   "formats the initial *sysman pannel*"
   (let ((folders (sysman--get-watched-folders-contents)))
-    (save-excursion ;; (get-buffer-create sysman--buffer-name)
+    (save-excursion 
       (setq-local buffer-read-only 'nil)
       (erase-buffer)
       (if sysman-repo-folder
@@ -141,15 +154,16 @@ return value."
 
 (add-hook 'sysman-mode-hook #'sysman-initial-format-buffer-hook)
 
-(setq sysman-mode-map
-      (let ((map (make-sparse-keymap)))
-	(set-keymap-parent map special-mode-map)
-	(define-key map (kbd "TAB") #'sysman-toggle-heading)
-	(define-key map (kbd "n") #'next-line)
-	(define-key map (kbd "p") #'previous-line)
-	map))
+(defvar sysman-mode-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map special-mode-map)
+    (define-key map (kbd "TAB") #'sysman-toggle-heading)
+    (define-key map (kbd "n") #'next-line)
+    (define-key map (kbd "p") #'previous-line)
+    map))
 
 (defun sysman ()
+  "Command to initialize `sysman-mode'. Should be used instead of calling `sysman-mode' directaly"
   (interactive)
   (let ((buffer (get-buffer-create sysman--buffer-name)))
     (with-current-buffer-window buffer buffer nil
@@ -162,4 +176,5 @@ return value."
 
 ;; Local Variables:
 ;; eval: (add-hook 'before-save-hook (lambda nil (indent-region (point-min) (point-max))) nil t)
+;; eval: (setq-local sysman-config-folder "~/.system" sysman-repo-folder "d1024" sysman-watched-folders '("d1024" "d1024/services" "d1024/services/emacs"))
 ;; End:
