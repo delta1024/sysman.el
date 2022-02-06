@@ -1,10 +1,23 @@
-(defvar sysman-config-folder 'nil "The directory which houses your guix channel repo folder")
+;;; Title:      Sysman - System Manager
+;;; Author:     Jacob Stannix
+;;; Created:    02.01.2022
+;;;
+;;; A Emacs Package for managing my GNU/Guix Linux system
 
-(defvar sysman-watched-folders '() "The folders you access the most in your guix channel. These are reletive to `sysman-conifg-folder'")
+(defvar-local sysman--heading-alist 'nil
+  "holds heading start and end positions")
 
-(defvar sysman--buffer-name "*sysman pannel*" "the default sysman buffer name value")
+(defvar sysman-config-folder 'nil
+  "The directory which houses your guix channel repo folder")
 
-(defvar sysman-repo-folder 'nil "if non-nil this variable is appended to `sysman-config-folder' when `sysman--canonicalize-folder-path' is run")
+(defvar sysman-watched-folders '()
+  "The folders you access the most in your guix channel. These are reletive to `sysman-conifg-folder'")
+
+(defvar sysman--buffer-name "*sysman pannel*"
+  "the default sysman buffer name value")
+
+(defvar sysman-repo-folder 'nil
+  "if non-nil this variable is appended to `sysman-config-folder' when `sysman--canonicalize-folder-path' is run")
 
 (defface sysman-header-face
   '((((type graphic) (background dark))
@@ -21,7 +34,7 @@
 (defface sysman-folder-face
   '((((type graphic) (background dark))
      :foreground "gold"))		
- "Face for sysman folder diplay"
+  "Face for sysman folder diplay"
   :group 'sysman-faces)
 
 (setq sysman-config-folder "~/.system"
@@ -30,8 +43,8 @@
 
 (defun sysman--canonicalize-folder-path (folder)
   "if `sysman-repo-folder' is non-nil, appends it's value to `sysman-config-folder', returns the full system path of FOLDER reletive to that"
-  (let ((path (concat sysman-config-folder (if sysman-repo-folder
-					       (format "/%s" sysman-repo-folder) ""))))
+  (let ((path (concat sysman-config-folder (when sysman-repo-folder
+					     (format "/%s" sysman-repo-folder)))))
     (expand-file-name folder path)))
 
 (defun sysman--get-watched-folders-contents ()
@@ -49,10 +62,32 @@ return value."
 	      user-folder) folder-structure-list))
     (reverse folder-structure-list)))
 
-(defun sysman--format-buffer-function (arg1 arg2)
-  "formats the default *sysman pannel*"
+(defun sysman--heading-to-symbol ()
+  (let ((heading-string (thing-at-point 'line t)))
+    (intern (format ":%s" (string-trim-right heading-string ":\n")))))
+
+(defun sysman--build-heading-alist ()
+  (let ((heading-alist '()))
+    (save-excursion
+      (goto-char (point-min))
+      (text-property-search-forward 'header t)
+      (while (/= (point) (point-max))
+	(next-line)
+	(push (let* ((heading-symbol (sysman--heading-to-symbol))
+		     (start-point (lambda ()
+				    (next-line)
+				    (point)))
+		     (end-point (lambda ()
+				  (text-property-search-forward 'header t)
+				  (point))))
+		`(,heading-symbol . (,(funcall start-point) ,(funcall end-point)))) heading-alist)))
+    (reverse heading-alist)))
+
+
+(defun sysman-initial-format-buffer-hook ()
+  "formats the initial *sysman pannel*"
   (let ((folders (sysman--get-watched-folders-contents)))
-    (with-current-buffer (get-buffer-create sysman--buffer-name)  
+    (save-excursion ;; (get-buffer-create sysman--buffer-name)
       (setq-local buffer-read-only 'nil)
       (erase-buffer)
       (if sysman-repo-folder
@@ -60,38 +95,71 @@ return value."
 			  (expand-file-name sysman-config-folder)
 			  (expand-file-name sysman-repo-folder sysman-config-folder)))
 	(insert (format "Project Root: %s\n" (expand-file-name sysman-config-folder))))
-      
+
       (dolist (folder-list folders)
 	(let* ((parent-dir (pop folder-list))
 	       (parent-dir-path (sysman--canonicalize-folder-path parent-dir)))
-
 	  (insert (propertize (format "\n%s:\n" parent-dir)
-			      'file-type 'header
+			      'system-path parent-dir-path
+			      'header t
 			      'font-lock-face 'sysman-header-face))
-	  
 	  (dolist (files folder-list)
 	    (if (f-directory-p (expand-file-name files parent-dir-path))
 		(insert (propertize (format "\t%s\n" files)
-				    'file-type 'directory
+				    'directory t
+				    'parent-dir parent-dir-path
 				    'font-lock-face 'sysman-folder-face))
 	      (insert (propertize (format "\t%s\n" files)
-				  'file-type 'file
+				  'file t
+				  'parent-dir parent-dir-path
 				  'font-lock-face 'sysman-file-face))))))
-      (setq-local buffer-read-only 't))))
+      (setq-local buffer-read-only 't)
+      (setq sysman--heading-alist (sysman--build-heading-alist)))))
 
-(defun sysman-init-hook ()
-  (sysman--format-buffer-function nil nil))
+(defun sysman--show-heading ()
+  "shows the subcontents of heading at point"
+  (let ((range (alist-get (sysman--heading-to-symbol) sysman--heading-alist)))
+    (add-text-properties (nth 0 range) (nth 1 range) '(invisible nil))
+    (add-text-properties (line-beginning-position) (line-end-position) '(is-hidden nil))))
 
-(add-hook 'sysman-mode-hook #'sysman-init-hook)
+(defun sysman--hide-heading ()
+  "hides the subcontents of heading at point"
+  (let ((range (alist-get (sysman--heading-to-symbol) sysman--heading-alist)))
+    (add-text-properties (nth 0 range) (nth 1 range) '(invisible t))
+    (add-text-properties (line-beginning-position) (line-end-position) '(is-hidden t))))
+
+
+(defun sysman-toggle-heading ()
+  "Toggles visibility of the curren heading at point"
+  (interactive)
+  (when (get-text-property (point) 'header)
+    (setq-local buffer-read-only 'nil)
+    (if (get-text-property (point) 'is-hidden)
+	(sysman--show-heading)
+      (sysman--hide-heading))
+    (setq-local buffer-read-only 't)))
+
+(add-hook 'sysman-mode-hook #'sysman-initial-format-buffer-hook)
+
+(setq sysman-mode-map
+      (let ((map (make-sparse-keymap)))
+	(set-keymap-parent map special-mode-map)
+	(define-key map (kbd "TAB") #'sysman-toggle-heading)
+	(define-key map (kbd "n") #'next-line)
+	(define-key map (kbd "p") #'previous-line)
+	map))
 
 (defun sysman ()
   (interactive)
-  (with-current-buffer-window
-      (get-buffer-create sysman--buffer-name)
-      (get-buffer-create sysman--buffer-name)  nil
-    (sysman-mode)))
+  (let ((buffer (get-buffer-create sysman--buffer-name)))
+    (with-current-buffer-window buffer buffer nil
+      (sysman-mode))))
 
-(define-derived-mode sysman-mode special-mode "Sysman" "Major Mode for managing my GNU/Guix system"
-  (setq-local revert-buffer-function #'sysman--format-buffer-function))
+
+(define-derived-mode sysman-mode special-mode "Sysman" "Major Mode for managing my GNU/Guix System")
 
 (provide 'sysman)
+
+;; Local Variables:
+;; eval: (add-hook 'before-save-hook (lambda nil (indent-region (point-min) (point-max))) nil t)
+;; End:

@@ -2,19 +2,38 @@
 #+SUBTITLE: A Package for managing my guix channel alongside my guix system with emacs
 
 * Basics
-At it's most basic level the package will take the values stored in ~sysman-watched-folders~ releteve to the variable ~sysman-config-folder~ and bulid a ui for interacting with each folder in ~sysman-watched-folders~.
+At it's most basic level the package will take the values stored in
+~sysman-watched-folders~ releteve to the variable ~sysman-config-folder~
+and bulid a ui for interacting with each folder in
+~sysman-watched-folders~.
 * The UI
-- The ui will be built from the values gathered by =ls= which will be run with ~default-directory~ set to the value of ~sysman-watched-folders~.
+- The ui will be built from the values gathered by =ls= which will be
+  run with ~default-directory~ set to the value of
+  ~sysman-watched-folders~.
   
-- Finally we will itterate over ~file-structure-alist~ with a formatting function and insert the desired text into the buffer which will then be displayed to the user.
+- Finally we will itterate over ~file-structure-alist~ with a formatting
+  function and insert the desired text into the buffer which will then
+  be displayed to the user.
 
-- after having it's text property set to ~'source-folder~, which is the value of the file/folder's parent directory as an absolute path.
+- after having it's text property set to ~'source-folder~, which is the
+  value of the file/folder's parent directory as an absolute path.
 * Todo
-** TODO Create buffer that hides watched dir info until the user needs it.
+
 * Next
+** TODO Implement ~sysman--hide-heading~ and ~sysman--show-heading~.
+
+* Done
 ** DONE Get folder contents
-- The =ls= output will the be itterated over with each line being pushed to a list, the value of that list will then be assosiated with a key whose value is the ~sysman-watched-folders~ value. The finalised alist will be returned by the function.
-** DONE Create a functin that will iterate over a given list, the first value being the key of the default-directory, if any of the next items in the list happen to be a directory it will expand subfolders to be a sublist with the first value as the directory name and the rest of the values being it's contents, if it's a file keep it as is. 
+- The =ls= output will the be itterated over with each line being pushed
+  to a list, the value of that list will then be assosiated with a key
+  whose value is the ~sysman-watched-folders~ value. The finalised alist
+  will be returned by the function.
+** DONE Create a functin that will iterate over a given list,
+- the first value being the key of the default-directory, if any of
+  the next items in the list happen to be a directory it will expand
+  subfolders to be a sublist with the first value as the directory
+  name and the rest of the values being it's contents, if it's a file
+  keep it as is.
 ** DONE Wirte the formating fuction to display the text appropreatly in the buffer
 CLOSED: [2022-02-03 Thu 18:23]
 ** DONE Define a function to setup the appropreate environment and open the popup window
@@ -27,3 +46,8 @@ CLOSED: [2022-02-03 Thu 21:35]
 CLOSED: [2022-02-04 Fri 10:16]
 ** DONE Define any font faces that are needed and add there property to the appropriate section of the formating function
 CLOSED: [2022-02-04 Fri 11:20]
+** DONE Remove invisible property from formating function 
+CLOSED: [2022-02-06 Sun 12:25]
+** DONE Creat funciton to biuild the heading start and end points
+CLOSED: [2022-02-06 Sun 12:26]
+
