@@ -2,9 +2,9 @@
 ;;; Author:     Jacob Stannix
 ;;; Created:    02.03.2022
 ;;;
-;;; Copyright (c) 2022, Jacob Stannix
 ;;; A Emacs Package for managing my GNU/Guix Linux system
-
+;;; Copyright (c) 2022, Jacob Stannix
+;; 
 ;; This program is free software: you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
 ;; published by the Free Software Foundation; either version 3 of
@@ -23,17 +23,20 @@
 (defvar-local sysman--heading-alist 'nil
   "holds heading start and end positions")
 
-(defvar sysman-config-folder 'nil
-  "The directory which houses your guix channel repo folder")
+(defcustom sysman-config-folder 'nil
+  "The directory which houses your guix channel repo folder"
+  :type '(sexp))
 
-(defvar sysman-watched-folders '()
-  "The folders you access the most in your guix channel. These are reletive to `sysman-conifg-folder'")
+(defcustom sysman-watched-folders '()
+  "The folders you access the most in your guix channel. These are reletive to `sysman-conifg-folder'"
+  :type '(sexp))
 
 (defvar sysman--buffer-name "*sysman pannel*"
   "the default sysman buffer name value")
 
-(defvar sysman-repo-folder 'nil
-  "if non-nil this variable is appended to `sysman-config-folder' when `sysman--canonicalize-folder-path' is run")
+(defcustom sysman-repo-folder 'nil
+  "if non-nil this variable is appended to `sysman-config-folder' when `sysman--canonicalize-folder-path' is run"
+  :type '(string))
 
 (defface sysman-header-face
   '((((type graphic) (background dark))
@@ -175,6 +178,8 @@ return value."
 (provide 'sysman)
 
 ;; Local Variables:
-;; eval: (add-hook 'before-save-hook (lambda nil (indent-region (point-min) (point-max))) nil t)
-;; eval: (setq-local sysman-config-folder "~/.system" sysman-repo-folder "d1024" sysman-watched-folders '("d1024" "d1024/services" "d1024/services/emacs"))
+;; before-save-hook: (lambda nil (indent-region (point-min) (point-max)))
+;; sysman-config-folder: "~/.system"
+;; sysman-repo-folder: "d1024"
+;; sysman-watch-folders: '("d1024" "d1024/services" "d1024/services/emacs")
 ;; End:
