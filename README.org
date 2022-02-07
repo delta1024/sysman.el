@@ -1,0 +1,4 @@
+#+TITLE: Sysman
+#+SUBTITLE: SYStemMANager, an emacs package for managing my GNU/Guix channel/system
+
+Sysman is still in the  early development stages. Feel free to peruse the  code for more details.

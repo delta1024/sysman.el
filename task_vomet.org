@@ -1,5 +1,5 @@
 #+TITLE: Sysman
-#+SUBTITLE: A Package for managing my guix channel alongside my guix system with emacs
+#+SUBTITLE: An emacs package for managing my personal GNU/Guix channel.
 
 * Basics
 At it's most basic level the package will take the values stored in
@@ -18,10 +18,11 @@ and bulid a ui for interacting with each folder in
 - after having it's text property set to ~'source-folder~, which is the
   value of the file/folder's parent directory as an absolute path.
 * Todo
-
+** TODO Implement a repo status function
+** TODO creat a devided buffer with file on the left and status on the right
+** TODO Implement an open file function
 * Next
-** TODO Implement ~sysman--hide-heading~ and ~sysman--show-heading~.
-
+** TODO Figure out how to have a split buffer
 * Done
 ** DONE Get folder contents
 - The =ls= output will the be itterated over with each line being pushed
@@ -50,4 +51,6 @@ CLOSED: [2022-02-04 Fri 11:20]
 CLOSED: [2022-02-06 Sun 12:25]
 ** DONE Creat funciton to biuild the heading start and end points
 CLOSED: [2022-02-06 Sun 12:26]
+** DONE Implement ~sysman--hide-heading~ and ~sysman--show-heading~.
+CLOSED: [2022-02-06 Sun 14:14]
 
